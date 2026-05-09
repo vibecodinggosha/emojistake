@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/promo-redeem", "destination": "/api/promo-redeem.js" }
+  ]
+}
