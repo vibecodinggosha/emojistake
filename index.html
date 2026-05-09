@@ -1809,8 +1809,19 @@ const DEALER_PHRASES = {
   ],
 };
 
+const STORAGE_KEY = 'emojistake_balance';
+
+function loadBalance() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved !== null ? parseInt(saved, 10) : 5000;
+}
+
+function saveBalance(amount) {
+  localStorage.setItem(STORAGE_KEY, amount);
+}
+
 let gameState = {
-  balance: 5000,
+  balance: loadBalance(),
   stake: 50,
   streak: [],
   rolling: false,
@@ -2041,6 +2052,7 @@ async function doRoll() {
   if (gameState.balance < Math.min(...[10,25,50,100,250,500])) {
     if (gameState.balance <= 0) {
       gameState.balance = 0;
+      localStorage.removeItem(STORAGE_KEY);
       await sleep(1500);
       setBubble('broke');
       document.getElementById('g-subtitle').textContent = 'Balance depleted. Reload to play again.';
@@ -2063,6 +2075,7 @@ function showResult(value, cls, subtitle) {
 }
 
 function updateBalanceDisplay(isWin, isLose) {
+  saveBalance(gameState.balance);
   const el = document.getElementById('g-balance');
   el.textContent = gameState.balance.toLocaleString();
   // update max hint
