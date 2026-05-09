@@ -1869,16 +1869,7 @@ function saveBalance(amount) {
   localStorage.setItem(STORAGE_KEY, amount);
 }
 
-const PROMO_CODES = {
-  'ESGEM': { reward: 20000, maxUses: 15 }
-};
-const PROMO_USES_KEY = 'emojistake_promo_uses';
-
-function getPromoUses() {
-  try { return JSON.parse(localStorage.getItem(PROMO_USES_KEY)) || {}; } catch { return {}; }
-}
-
-function redeemPromo() {
+async function redeemPromo() {
   const input = document.getElementById('promo-input');
   const msg = document.getElementById('promo-msg');
   const code = (input.value || '').trim().toUpperCase();
@@ -1889,34 +1880,35 @@ function redeemPromo() {
     return;
   }
 
-  const promo = PROMO_CODES[code];
-  if (!promo) {
+  msg.style.color = 'var(--text3)';
+  msg.textContent = 'Checking...';
+
+  try {
+    const res = await fetch('/api/promo/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      msg.style.color = 'var(--red2)';
+      msg.textContent = data.error;
+      return;
+    }
+
+    gameState.balance += data.reward;
+    saveBalance(gameState.balance);
+    updateBalanceDisplay(true);
+
+    input.value = '';
+    msg.style.color = 'var(--gold2)';
+    msg.textContent = '+' + data.reward.toLocaleString() + ' coins added!';
+    setTimeout(() => { msg.textContent = ''; }, 4000);
+  } catch {
     msg.style.color = 'var(--red2)';
-    msg.textContent = 'Invalid promo code.';
-    return;
+    msg.textContent = 'Server error. Try again.';
   }
-
-  const uses = getPromoUses();
-  const used = uses[code] || 0;
-  if (used >= promo.maxUses) {
-    msg.style.color = 'var(--red2)';
-    msg.textContent = 'This code has been fully redeemed.';
-    return;
-  }
-
-  uses[code] = used + 1;
-  localStorage.setItem(PROMO_USES_KEY, JSON.stringify(uses));
-
-  gameState.balance += promo.reward;
-  saveBalance(gameState.balance);
-  updateBalanceDisplay(true);
-
-  input.value = '';
-  msg.style.color = 'var(--gold2)';
-  msg.textContent = '+' + promo.reward.toLocaleString() + ' coins added! (' + (promo.maxUses - uses[code]) + ' uses left)';
-
-  // Clear message after 4s
-  setTimeout(() => { if (msg.textContent.includes('coins added')) msg.textContent = ''; }, 4000);
 }
 
 let gameState = {
