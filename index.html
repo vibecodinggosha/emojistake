@@ -1496,6 +1496,55 @@ const DICE_ANIMS = {
         ♦ Roll the Dice
       </button>
 
+      <!-- Promo code -->
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px;align-items:stretch">
+        <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;text-align:center">Promo Code</div>
+        <div style="display:flex;gap:8px">
+          <input
+            id="promo-input"
+            type="text"
+            maxlength="20"
+            placeholder="Enter code..."
+            style="
+              flex:1;
+              background:rgba(0,0,0,0.5);
+              border:1px solid var(--border2);
+              border-radius:4px;
+              padding:9px 12px;
+              font-family:'JetBrains Mono',monospace;
+              font-size:14px;
+              font-weight:700;
+              color:var(--gold2);
+              outline:none;
+              min-width:0;
+              text-transform:uppercase;
+              letter-spacing:2px;
+              transition:border-color .2s;
+            "
+            onfocus="this.style.borderColor='var(--gold2)'"
+            onblur="this.style.borderColor='var(--border2)'"
+            onkeydown="if(event.key==='Enter')redeemPromo()"
+          />
+          <button
+            onclick="redeemPromo()"
+            style="
+              padding:9px 16px;
+              background:linear-gradient(135deg,rgba(212,160,23,0.2),rgba(200,16,46,0.2));
+              border:1px solid var(--border2);
+              border-radius:4px;
+              font-family:'Cinzel',serif;
+              font-size:10px;font-weight:700;
+              letter-spacing:1px;color:var(--gold);
+              cursor:pointer;white-space:nowrap;
+              transition:all .2s;
+            "
+            onmouseenter="this.style.borderColor='var(--gold2)';this.style.color='var(--gold2)'"
+            onmouseleave="this.style.borderColor='var(--border2)';this.style.color='var(--gold)'"
+          >Apply</button>
+        </div>
+        <div id="promo-msg" style="font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;min-height:16px;letter-spacing:1px"></div>
+      </div>
+
       <!-- Multiplier table -->
       <div>
         <div class="stake-label" style="margin-bottom:8px">Payout Table</div>
@@ -1820,6 +1869,56 @@ function saveBalance(amount) {
   localStorage.setItem(STORAGE_KEY, amount);
 }
 
+const PROMO_CODES = {
+  'ESGEM': { reward: 20000, maxUses: 15 }
+};
+const PROMO_USES_KEY = 'emojistake_promo_uses';
+
+function getPromoUses() {
+  try { return JSON.parse(localStorage.getItem(PROMO_USES_KEY)) || {}; } catch { return {}; }
+}
+
+function redeemPromo() {
+  const input = document.getElementById('promo-input');
+  const msg = document.getElementById('promo-msg');
+  const code = (input.value || '').trim().toUpperCase();
+
+  if (!code) {
+    msg.style.color = 'var(--text3)';
+    msg.textContent = 'Enter a promo code first.';
+    return;
+  }
+
+  const promo = PROMO_CODES[code];
+  if (!promo) {
+    msg.style.color = 'var(--red2)';
+    msg.textContent = 'Invalid promo code.';
+    return;
+  }
+
+  const uses = getPromoUses();
+  const used = uses[code] || 0;
+  if (used >= promo.maxUses) {
+    msg.style.color = 'var(--red2)';
+    msg.textContent = 'This code has been fully redeemed.';
+    return;
+  }
+
+  uses[code] = used + 1;
+  localStorage.setItem(PROMO_USES_KEY, JSON.stringify(uses));
+
+  gameState.balance += promo.reward;
+  saveBalance(gameState.balance);
+  updateBalanceDisplay(true);
+
+  input.value = '';
+  msg.style.color = 'var(--gold2)';
+  msg.textContent = '+' + promo.reward.toLocaleString() + ' coins added! (' + (promo.maxUses - uses[code]) + ' uses left)';
+
+  // Clear message after 4s
+  setTimeout(() => { if (msg.textContent.includes('coins added')) msg.textContent = ''; }, 4000);
+}
+
 let gameState = {
   balance: loadBalance(),
   stake: 50,
@@ -2052,10 +2151,10 @@ async function doRoll() {
   if (gameState.balance < Math.min(...[10,25,50,100,250,500])) {
     if (gameState.balance <= 0) {
       gameState.balance = 0;
-      localStorage.removeItem(STORAGE_KEY);
+      saveBalance(0);
       await sleep(1500);
       setBubble('broke');
-      document.getElementById('g-subtitle').textContent = 'Balance depleted. Reload to play again.';
+      document.getElementById('g-subtitle').textContent = 'Balance depleted. Enter a promo code to continue.';
     }
   }
 
