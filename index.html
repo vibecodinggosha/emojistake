@@ -56,8 +56,7 @@ body::before{
   position:absolute;
   font-size:28px;opacity:0;
   animation:fcardDrift linear infinite;
-  will-change:transform,opacity;
-  filter:drop-shadow(0 0 6px rgba(212,160,23,0.4));
+  will-change:transform;
 }
 @keyframes fcardDrift{
   0%  {transform:translateY(110vh) rotate(-15deg);opacity:0}
@@ -114,6 +113,10 @@ nav{
 }
 .nav-buy:hover{box-shadow:0 0 36px rgba(200,16,46,0.6);transform:translateY(-1px)}
 @media(max-width:640px){.nav-links{display:none}}
+@media(max-width:768px){
+  nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(5,5,5,0.97)}
+  .float-bg{display:none}
+}
 
 /* ═══ HERO ═══ */
 .hero{
@@ -1699,15 +1702,14 @@ document.getElementById('footer-lottie').addEventListener('click',()=>{fA.stop()
 // Floating background — cards + dice
 (function(){
   const bg = document.getElementById('floatBg');
-  const items = ['🎲','🃏','♠','♥','♣','♦','🎰','🎲','🎲'];
-  const N = 24;
+  const items = ['🎲','♠','♥','♣','♦','🎲'];
+  const N = window.innerWidth < 768 ? 8 : 18;
   for(let i=0;i<N;i++){
     const d = document.createElement('div');
     d.className = 'fcard';
-    const ico = items[i % items.length];
-    d.textContent = ico;
-    const sz = 16 + Math.random()*22;
-    d.style.cssText = `left:${Math.random()*100}%;font-size:${sz}px;animation-duration:${10+Math.random()*16}s;animation-delay:${Math.random()*18}s;`;
+    d.textContent = items[i % items.length];
+    const sz = 14 + Math.random()*16;
+    d.style.cssText = `left:${Math.random()*100}%;font-size:${sz}px;animation-duration:${14+Math.random()*16}s;animation-delay:${Math.random()*20}s;`;
     bg.appendChild(d);
   }
 })();
