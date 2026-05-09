@@ -1884,7 +1884,7 @@ async function redeemPromo() {
   msg.textContent = 'Checking...';
 
   try {
-    const res = await fetch('/api/promo/redeem', {
+    const res = await fetch('/api/promo-redeem', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
